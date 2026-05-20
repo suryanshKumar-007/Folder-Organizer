@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Downloads Organizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --surface: #ffffff;
+      --card: #ffffff;
+      --border: #e0e0e0;
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --danger: #ef4444;
+      --font-head: 'Inter', sans-serif;
+      --font-mono: 'Inter', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-head);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .glow-orb { display: none; }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+      animation: slideDown 0.5s ease both;
+    }
+
+    .logo-box {
+      width: 44px; height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      background: #fff;
+    }
+
+    header h1 {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    header h1 span { color: var(--accent); }
+
+    .badge {
+      margin-left: auto;
+      background: var(--accent-light);
+      border: 1px solid #bfdbfe;
+      color: var(--accent);
+      font-size: 0.65rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Drop Zone */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .dropzone::before { display: none; }
+
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+    .dropzone:hover::before, .dropzone.drag-over::before { opacity: 0; }
+
+    .drop-icon {
+      font-size: 40px;
+      display: block;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .dropzone h2 {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .dropzone p { color: var(--muted); font-size: 0.82rem; }
+
+    .browse-btn {
+      margin-top: 18px;
+      display: inline-block;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 9px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font-head);
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .browse-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+    #fileInput { display: none; }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      animation: fadeUp 0.5s 0.2s ease both;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      flex: 1;
+      min-width: 160px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-family: var(--font-head);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mode-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+
+    .mode-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .mode-btn .icon { font-size: 18px; }
+
+    /* Action bar */
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      animation: fadeUp 0.5s 0.3s ease both;
+    }
+
+    .btn-organize {
+      flex: 2;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-head);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-organize::after { display: none; }
+    .btn-organize:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+    .btn-organize:active { transform: translateY(0); }
+
+    .btn-undo {
+      flex: 1;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+      font-family: var(--font-head);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-undo:hover { border-color: var(--danger); color: var(--danger); background: #fef2f2; }
+
+    /* File list */
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin: 36px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--border);
+    }
+
+    .file-grid {
+      display: grid;
+      gap: 8px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .file-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.2s;
+      animation: slideIn 0.3s ease both;
+    }
+    .file-card:hover { border-color: var(--border); background: rgba(255,255,255,0.02); transform: translateX(4px); }
+
+    .file-icon {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .file-info { flex: 1; overflow: hidden; }
+    .file-name { font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+    .file-arrow {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.72rem; color: var(--muted);
+      flex-shrink: 0;
+    }
+    .file-arrow .cat-badge {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    /* Category colors */
+    .cat-images  { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .cat-videos  { background: rgba(239,68,68,0.15);  color: #ef4444; }
+    .cat-audio   { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .cat-documents { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .cat-archives { background: rgba(234,179,8,0.15);  color: #eab308; }
+    .cat-code    { background: rgba(0,229,160,0.15);  color: var(--accent); }
+    .cat-executables { background: rgba(249,115,22,0.15); color: #f97316; }
+    .cat-others  { background: rgba(107,114,128,0.15); color: #9ca3af; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+    .stat-chip .num {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .stat-chip .label { color: var(--muted); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 32px; right: 32px;
+      background: var(--card);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      max-width: 320px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--accent); }
+    .toast.error   { border-color: var(--danger); }
+    .toast .t-icon { font-size: 20px; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .empty-state .e-icon { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.4; }
+
+    /* Log output */
+    .log-box {
+      background: #0d0d15;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      max-height: 180px;
+      overflow-y: auto;
+      line-height: 1.8;
+      margin-top: 8px;
+    }
+    .log-box .log-line { display: flex; gap: 10px; }
+    .log-box .log-line .ts { color: var(--accent); opacity: 0.5; flex-shrink: 0; }
+    .log-box .log-line .moved { color: var(--accent); }
+    .log-box .log-line .preview { color: var(--accent3); }
+    .log-box .log-line .undo-line { color: #a78bfa; }
+
+    /* Progress bar */
+    .progress-wrap {
+      height: 4px; background: var(--border);
+      border-radius: 2px; overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* Animations */
+    @keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp    { from { opacity:0; transform:translateY(20px);  } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn   { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  </style>
+</head>
+<body>
+
+<div class="glow-orb g1"></div>
+<div class="glow-orb g2"></div>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="logo-box">🗂️</div>
+    <div>
+      <h1>Downloads <span>Organizer</span></h1>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;">Smart File Sorter — Foundational v1.0</div>
+    </div>
+    <div class="badge">Python Tool</div>
+  </header>
+
+  <!-- Drop Zone -->
+  <div class="dropzone" id="dropzone">
+    <span class="drop-icon"></span>
+    <h2>Files Yahan Drop Karo</h2>
+    <p>Ya apni Downloads folder select karo preview ke liye</p>
+    <label class="browse-btn" for="fileInput"> Browse Files</label>
+    <input type="file" id="fileInput" multiple />
+  </div>
+
+  <!-- Mode Selection -->
+  <div class="controls">
+    <button class="mode-btn active" id="dryRunBtn" onclick="setMode('dry')">
+      <span class="icon"></span>
+      <div>
+        <div style="font-weight:bold;">Dry Run</div>
+        <div style="color:var(--muted);font-size:0.7rem">Sirf preview dekho</div>
+      </div>
+    </button>
+    <button class="mode-btn" id="liveBtn" onclick="setMode('live')">
+      <span class="icon">⚡</span>
+      <div>
+        <div style="font-weight:bold;">Live Mode</div>
+        <div style="color:var(--muted);font-size:0.7rem">Actually organize karo</div>
+      </div>
+    </button>
+    <button class="mode-btn" id="undoModeBtn" onclick="setMode('undo')">
+      <span class="icon">↩️</span>
+      <div>
+        <div style="font-weight:bold;">Undo</div>
+        <div style="color:var(--muted);font-size:0.7rem">Sab wapas karo</div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button class="btn-organize" id="organizeBtn" onclick="runOrganize()">
+      🚀 Organize Karo
+    </button>
+    <button class="btn-undo" onclick="runUndo()">↩️ Undo</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <div class="stat-chip"><span class="num" id="totalCount">0</span><span class="label">Total Files</span></div>
+    <div class="stat-chip"><span class="num" id="movedCount">0</span><span class="label">Categorized</span></div>
+    <div class="stat-chip"><span class="num" id="catCount">0</span><span class="label">Categories</span></div>
+  </div>
+
+  <!-- File Results -->
+  <div id="resultsSection" style="display:none">
+    <div class="section-title">📋 File Preview</div>
+    <div class="file-grid" id="fileGrid"></div>
+  </div>
+
+  <!-- Log Output -->
+  <div id="logSection" style="display:none">
+    <div class="section-title"> Log Output</div>
+    <div class="log-box" id="logBox"></div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="t-icon" id="toastIcon"></span>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<script>
+  // ─── Categories (Python code se match) ───────────────────
+  const CATEGORIES = {
+    "Images":      [".jpg",".jpeg",".png",".gif",".bmp",".svg",".webp",".ico"],
+    "Videos":      [".mp4",".mkv",".mov",".avi",".wmv",".flv",".webm"],
+    "Audio":       [".mp3",".wav",".aac",".flac",".ogg",".m4a"],
+    "Documents":   [".pdf",".doc",".docx",".xls",".xlsx",".ppt",".pptx",".txt",".odt"],
+    "Archives":    [".zip",".rar",".7z",".tar",".gz",".bz2"],
+    "Code":        [".py",".js",".html",".css",".java",".cpp",".c",".ts",".json",".xml"],
+    "Executables": [".exe",".msi",".dmg",".pkg",".deb",".apk"],
+    "Others":      []
+  };
+
+  const ICONS = {
+    Images: "🖼️", Videos: "🎬", Audio: "🎵",
+    Documents: "📄", Archives: "📦", Code: "💻",
+    Executables: "⚙️", Others: "📎"
+  };
+
+  const CAT_COLORS = {
+    Images: "cat-images", Videos: "cat-videos", Audio: "cat-audio",
+    Documents: "cat-documents", Archives: "cat-archives", Code: "cat-code",
+    Executables: "cat-executables", Others: "cat-others"
+  };
+
+  let currentMode = 'dry';
+  let processedFiles = [];
+
+  // ─── Get Category ───────────────────────────────────────
+  function getCategory(filename) {
+    const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+    for (const [cat, exts] of Object.entries(CATEGORIES)) {
+      if (exts.includes(ext)) return cat;
+    }
+    return "Others";
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1024/1024).toFixed(1) + ' MB';
+  }
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('dryRunBtn').classList.toggle('active', mode === 'dry');
+    document.getElementById('liveBtn').classList.toggle('active', mode === 'live');
+    document.getElementById('undoModeBtn').classList.toggle('active', mode === 'undo');
+
+    const btn = document.getElementById('organizeBtn');
+    if (mode === 'dry')  { btn.textContent = ' Preview Dekho'; }
+    if (mode === 'live') { btn.textContent = ' Organize Karo'; }
+    if (mode === 'undo') { btn.textContent = ' Undo Karo'; }
+  }
+
+  // ─── File Input ─────────────────────────────────────────
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    handleFiles(Array.from(e.target.files));
+  });
+
+  const dropzone = document.getElementById('dropzone');
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    handleFiles(Array.from(e.dataTransfer.files));
+  });
+
+  function handleFiles(files) {
+    if (!files.length) return;
+    processedFiles = files.map(f => ({
+      name: f.name,
+      size: f.size,
+      category: getCategory(f.name),
+      moved: false
+    }));
+    renderPreview();
+    showToast('✅', `${files.length} files load hui!`, 'success');
+  }
+
+  // ─── Render Preview ─────────────────────────────────────
+  function renderPreview() {
+    const grid = document.getElementById('fileGrid');
+    grid.innerHTML = '';
+
+    processedFiles.forEach((f, i) => {
+      const div = document.createElement('div');
+      div.className = 'file-card';
+      div.style.animationDelay = `${i * 0.03}s`;
+      div.innerHTML = `
+        <div class="file-icon ${CAT_COLORS[f.category]}" style="background:currentColor;opacity:0.1;position:relative;">
+          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:10;font-size:18px;">${ICONS[f.category]}</span>
+        </div>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-meta">${formatSize(f.size)} • ${f.name.slice(f.name.lastIndexOf('.')).toLowerCase()}</div>
+        </div>
+        <div class="file-arrow">
+          <span style="opacity:0.4">→</span>
+          <span class="cat-badge ${CAT_COLORS[f.category]}">${f.category}</span>
+        </div>
+      `;
+      grid.appendChild(div);
+    });
+
+    const cats = new Set(processedFiles.map(f => f.category));
+    document.getElementById('totalCount').textContent = processedFiles.length;
+    document.getElementById('movedCount').textContent = processedFiles.length;
+    document.getElementById('catCount').textContent = cats.size;
+
+    document.getElementById('resultsSection').style.display = 'block';
+    document.getElementById('statsBar').style.display = 'flex';
+  }
+
+  // ─── Organize ───────────────────────────────────────────
+  async function runOrganize() {
+    if (!processedFiles.length) {
+      showToast('', 'Pehle kuch files select karo!', 'error');
+      return;
+    }
+    if (currentMode === 'undo') { runUndo(); return; }
+
+    const logBox = document.getElementById('logBox');
+    document.getElementById('logSection').style.display = 'block';
+    document.getElementById('progressWrap').style.display = 'block';
+    logBox.innerHTML = '';
+
+    const btn = document.getElementById('organizeBtn');
+    btn.disabled = true;
+    btn.textContent = ' Processing...';
+
+    for (let i = 0; i < processedFiles.length; i++) {
+      const f = processedFiles[i];
+      await delay(80);
+
+      const pct = Math.round(((i+1) / processedFiles.length) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+
+      const now = new Date().toLocaleTimeString('en', {hour12:false});
+      const cls = currentMode === 'dry' ? 'preview' : 'moved';
+      const label = currentMode === 'dry' ? '[PREVIEW]' : '[MOVED]  ';
+      addLog(logBox, now, `${label} ${f.name} → ${f.category}/`, cls);
+    }
+
+    setTimeout(() => {
+      document.getElementById('progressBar').style.width = '100%';
+      btn.disabled = false;
+      setMode(currentMode);
+
+      if (currentMode === 'dry') {
+        showToast('', `${processedFiles.length} files preview ready!`, 'success');
+      } else {
+        showToast('', `${processedFiles.length} files organize ho gayi!`, 'success');
+      }
+    }, 300);
+  }
+
+  function runUndo() {
+    if (!processedFiles.length) {
+      showToast('', 'Kuch bhi organize nahi hua abhi tak!', 'error');
+      return;
+    }
+    const logBox = document.getElementById('logBox');
+    document.getElementById('logSection').style.display = 'block';
+    logBox.innerHTML = '';
+
+    processedFiles.forEach(f => {
+      const now = new Date().toLocaleTimeString('en', {hour12:false});
+      addLog(logBox, now, `[UNDO] ${f.category}/${f.name} → Downloads/`, 'undo-line');
+    });
+
+    showToast('↩', 'Undo complete! Sab wapas aa gaya.', 'success');
+  }
+
+  function addLog(box, ts, msg, cls) {
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="ts">${ts}</span><span class="${cls}">${msg}</span>`;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ─── Toast ───────────────────────────────────────────────
+  let toastTimeout;
+  function showToast(icon, msg, type='success') {
+    clearTimeout(toastTimeout);
+    const t = document.getElementById('toast');
+    document.getElementById('toastIcon').textContent = icon;
+    document.getElementById('toastMsg').textContent = msg;
+    t.className = `toast ${type} show`;
+    toastTimeout = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ─── Init ────────────────────────────────────────────────
+  setMode('dry');
+</script>
+</body>
+</html>
